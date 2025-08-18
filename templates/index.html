@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <title>Connect Four AI - Alpha-Beta Pruning</title>
+  <style>
+    :root {
+      --bg-primary: #1a1a2e;
+      --bg-secondary: #16213e;
+      --accent-blue: #0f3460;
+      --accent-gold: #e94560;
+      --player1-color: #ff6b6b;
+      --player2-color: #ffd93d;
+      --board-blue: #0066ff;
+      --board-dark: #003399;
+      --white: #ffffff;
+      --text-light: #e8e8e8;
+      --shadow-dark: rgba(0, 0, 0, 0.5);
+    }
+    
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--accent-blue) 100%);
+      background-attachment: fixed;
+      color: var(--text-light);
+      min-height: 100vh;
+      margin: 0;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+    
+    .game-container {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 20px 60px var(--shadow-dark);
+      max-width: 100%;
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+    }
+    
+    .header { margin-bottom: 16px; }
+    
+    .title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: linear-gradient(45deg, var(--player1-color), var(--player2-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 4px;
+      line-height: 1.2;
+    }
+    
+    .subtitle {
+      font-size: 0.85rem;
+      opacity: 0.8;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+    
+    .stats-board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .stat-item {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      padding: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .stat-number {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--player1-color);
+      line-height: 1;
+    }
+    
+    .stat-label {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+    
+    .score-board {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .player-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .player-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .player1-avatar {
+      background: linear-gradient(135deg, var(--player1-color), #ff8e8e);
+    }
+    
+    .player2-avatar {
+      background: linear-gradient(135deg, var(--player2-color), #ffed4e);
+    }
+    
+    .vs {
+      font-size: 1.2rem;
+      font-weight: 700;
+      opacity: 0.7;
+    }
+    
+    .message-area {
+      background: linear-gradient(135deg, rgba(233, 69, 96, 0.2), rgba(255, 217, 61, 0.2));
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      line-height: 1.3;
+    }
+    
+    .board-container { 
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    
+    .board-wrapper {
+      background: linear-gradient(145deg, var(--board-blue), var(--board-dark));
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      position: relative;
+    }
+    
+    .drop-zone {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    
+    .drop-slot {
+      height: 35px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px 8px 3px 3px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      position: relative;
+      touch-action: manipulation;
+    }
+    
+    .drop-slot::before {
+      content: '↓';
+      font-size: 1rem;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    
+    .drop-slot:hover::before,
+    .drop-slot:active::before { 
+      opacity: 1; 
+    }
+    
+    .drop-slot:hover,
+    .drop-slot:active {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    .drop-slot.disabled {
+      background: rgba(255, 0, 0, 0.2);
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+    
+    .drop-slot.disabled:hover,
+    .drop-slot.disabled:active {
+      transform: none;
+      background: rgba(255, 0, 0, 0.2);
+    }
+    
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-template-rows: repeat(6, 1fr);
+      gap: 4px;
+      background: var(--board-dark);
+      padding: 8px;
+      border-radius: 12px;
+      box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+    
+    .cell {
+      width: 100%;
+      aspect-ratio: 1;
+      max-width: 45px;
+      max-height: 45px;
+      border-radius: 50%;
+      border: 2px solid var(--board-dark);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      justify-self: center;
+    }
+    
+    .empty {
+      background: radial-gradient(circle, var(--white) 0%, #f0f0f0 100%);
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+    
+    .player1 {
+      background: radial-gradient(circle, var(--player1-color) 0%, #e03e5a 100%);
+      box-shadow: 0 3px 10px rgba(255, 107, 107, 0.4);
+      animation: dropIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    
+    .player2 {
+      background: radial-gradient(circle, var(--player2-color) 0%, #ffc107 100%);
+      box-shadow: 0 3px 10px rgba(255, 217, 61, 0.4);
+      animation: dropIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    
+    @keyframes dropIn {
+      0% { transform: translateY(-50px) scale(0.8); opacity: 0; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    
+    .controls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    
+    .btn {
+      background: linear-gradient(135deg, var(--accent-gold), #d63384);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 25px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 6px 20px rgba(233, 69, 96, 0.3);
+      touch-action: manipulation;
+      min-width: 120px;
+    }
+    
+    .btn:hover,
+    .btn:active {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(233, 69, 96, 0.4);
+    }
+    
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .ai-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      opacity: 0.7;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .footer {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      line-height: 1.4;
+    }
+    
+    .github-link {
+      color: var(--player2-color);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    
+    .github-link:hover {
+      text-decoration: underline;
+    }
+    
+    /* Landscape phone optimization */
+    @media (max-height: 600px) and (orientation: landscape) {
+      body { padding: 5px; }
+      .game-container { padding: 12px; }
+      .header { margin-bottom: 8px; }
+      .title { font-size: 1.5rem; }
+      .subtitle { font-size: 0.75rem; margin-bottom: 8px; }
+      .stats-board { margin-bottom: 8px; }
+      .score-board { margin-bottom: 8px; padding: 8px 12px; }
+      .message-area { margin-bottom: 8px; padding: 8px; min-height: 40px; }
+      .board-container { margin-bottom: 8px; }
+      .controls { margin-bottom: 8px; }
+    }
+    
+    /* Very small screens */
+    @media (max-width: 350px) {
+      .cell { max-width: 38px; max-height: 38px; }
+      .drop-slot { height: 30px; }
+      .title { font-size: 1.6rem; }
+      .board-wrapper { padding: 10px; }
+      .game-board { gap: 3px; padding: 6px; }
+    }
+    
+    /* Large phones/small tablets */
+    @media (min-width: 480px) {
+      .game-container { max-width: 520px; padding: 24px; }
+      .cell { max-width: 55px; max-height: 55px; }
+      .drop-slot { height: 40px; }
+      .title { font-size: 2rem; }
+      .subtitle { font-size: 0.95rem; }
+    }
+    
+    /* Tablets and desktop */
+    @media (min-width: 768px) {
+      .game-container { max-width: 600px; padding: 32px; }
+      .cell { max-width: 65px; max-height: 65px; }
+      .drop-slot { height: 45px; }
+      .title { font-size: 2.5rem; }
+      .subtitle { font-size: 1rem; }
+      .game-board { gap: 6px; padding: 12px; }
+      .board-wrapper { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="header">
+      <h1 class="title">🔴 Connect Four AI 🟡</h1>
+      <p class="subtitle">Challenge the Alpha-Beta Pruning Algorithm!</p>
+    </div>
+
+    <div class="stats-board">
+      <div class="stat-item">
+        <div class="stat-number" id="human-wins">0</div>
+        <div class="stat-label">Your Wins</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="draws">0</div>
+        <div class="stat-label">Draws</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="ai-wins">0</div>
+        <div class="stat-label">AI Wins</div>
+      </div>
+    </div>
+
+    <div class="score-board">
+      <div class="player-info">
+        <div class="player-avatar player1-avatar">👤</div>
+        <span>You</span>
+      </div>
+      <div class="vs">VS</div>
+      <div class="player-info">
+        <span>AI</span>
+        <div class="player-avatar player2-avatar">🤖</div>
+      </div>
+    </div>
+
+    <div class="message-area" id="message">
+      Welcome! Click "New Game" to challenge the AI!
+    </div>
+
+    <div class="board-container">
+      <div class="board-wrapper">
+        <div class="drop-zone" id="drop-zone"></div>
+        <div class="game-board" id="game-board"></div>
+      </div>
+    </div>
+
+    <div class="ai-stats">
+      <span id="thinking-time"></span>
+      <span id="nodes-evaluated"></span>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="new-game-btn" onclick="newGame()">🎮 New Game</button>
+      <button class="btn" onclick="resetStats()">🔄 Reset Stats</button>
+    </div>
+
+    <div class="footer">
+      <p>Built with ❤️ using Alpha-Beta Pruning Algorithm</p>
+      <p><a href="https://github.com/yourusername/connect4-ai" class="github-link">⭐ Star on GitHub</a></p>
+    </div>
+  </div>
+
+  <script>
+    const ROWS = 6, COLS = 7;
+    let gameBoard = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+    let gameActive = false;
+
+    const boardEl = document.getElementById('game-board');
+    const dropZoneEl = document.getElementById('drop-zone');
+    const msgEl = document.getElementById('message');
+    const newGameBtn = document.getElementById('new-game-btn');
+
+    function updateStats(stats) {
+      document.getElementById('human-wins').textContent = stats.human_wins;
+      document.getElementById('ai-wins').textContent = stats.ai_wins;
+      document.getElementById('draws').textContent = stats.draws;
+    }
+
+    function createDropZone() {
+      dropZoneEl.innerHTML = '';
+      for (let c = 0; c < COLS; c++) {
+        const slot = document.createElement('div');
+        slot.className = 'drop-slot';
+        slot.dataset.col = c;
+        slot.title = `Drop in column ${c + 1}`;
+        slot.addEventListener('click', () => makeMove(c));
+        slot.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          makeMove(c);
+        });
+        dropZoneEl.appendChild(slot);
+      }
+    }
+
+    function createGameBoard() {
+      boardEl.innerHTML = '';
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell empty';
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          boardEl.appendChild(cell);
+        }
+      }
+    }
+
+    function updateBoard(board) {
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const cell = boardEl.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+          cell.classList.remove('empty', 'player1', 'player2');
+          if (board[r][c] === 0) cell.classList.add('empty');
+          else if (board[r][c] === 1) cell.classList.add('player1');
+          else if (board[r][c] === 2) cell.classList.add('player2');
+        }
+      }
+      updateDropZone(board);
+    }
+
+    function updateDropZone(board) {
+      dropZoneEl.querySelectorAll('.drop-slot').forEach((slot, index) => {
+        slot.classList.toggle('disabled', board[0][index] !== 0);
+      });
+    }
+
+    function setGameActive(active) {
+      gameActive = active;
+      newGameBtn.disabled = !active && gameActive !== false;
+      dropZoneEl.querySelectorAll('.drop-slot').forEach(slot => {
+        slot.style.pointerEvents = active ? 'auto' : 'none';
+      });
+    }
+
+    async function resetStats() {
+      try {
+        const response = await fetch('/reset_stats', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        
+        updateStats(data.stats);
+        msgEl.textContent = data.message;
+        
+        document.getElementById('thinking-time').textContent = '';
+        document.getElementById('nodes-evaluated').textContent = '';
+      } catch (error) {
+        msgEl.textContent = '❌ Error resetting stats. Please try again.';
+      }
+    }
+
+    async function newGame() {
+      msgEl.textContent = '🎲 Starting new game...';
+      newGameBtn.disabled = true;
+      document.getElementById('thinking-time').textContent = '';
+      document.getElementById('nodes-evaluated').textContent = '';
+      
+      try {
+        const response = await fetch('/new_game', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        gameBoard = data.board;
+        setGameActive(true);
+        updateBoard(gameBoard);
+        updateStats(data.stats);
+        msgEl.textContent = data.message;
+        newGameBtn.disabled = false;
+      } catch (error) {
+        msgEl.textContent = '❌ Error starting game. Please try again.';
+        newGameBtn.disabled = false;
+      }
+    }
+
+    async function makeMove(column) {
+      if (!gameActive) return;
+      const slot = dropZoneEl.children[column];
+      if (slot.classList.contains('disabled')) return;
+
+      msgEl.textContent = '🤔 AI is thinking...';
+      setGameActive(false);
+
+      try {
+        const response = await fetch('/make_move', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ column })
+        });
+        const data = await response.json();
+
+        if (data.error) {
+          msgEl.textContent = '❌ ' + data.error;
+          setGameActive(true);
+          return;
+        }
+
+        gameBoard = data.board;
+        updateBoard(gameBoard);
+        
+        if (data.stats) updateStats(data.stats);
+        
+        if (data.thinking_time) {
+          document.getElementById('thinking-time').textContent = `AI: ${data.thinking_time}s`;
+        }
+        if (data.nodes_evaluated) {
+          document.getElementById('nodes-evaluated').textContent = `Nodes: ${data.nodes_evaluated}`;
+        }
+
+        if (typeof data.winner !== 'undefined') {
+          setGameActive(false);
+        } else {
+          setGameActive(true);
+        }
+        
+        msgEl.textContent = data.message;
+      } catch (error) {
+        msgEl.textContent = '❌ Error occurred. Please try again.';
+        setGameActive(true);
+      }
+    }
+
+    // Initialize game
+    createDropZone();
+    createGameBoard();
+    setGameActive(false);
+  </script>
+</body>
+</html>
