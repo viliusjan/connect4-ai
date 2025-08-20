@@ -27,6 +27,7 @@ A modern, web-based Connect 4 game featuring an intelligent AI opponent powered 
 
 - Python 3.7 or higher
 - Git
+- Flask
 
 ### Installation & Setup
 
