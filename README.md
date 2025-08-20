@@ -120,4 +120,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Enjoy playing Connect 4 AI! 🎉**
 
-*Challenge yourself against an intelligent opponent and improve your strategic
+*Challenge yourself against an intelligent opponent and improve your strategic skills.*
