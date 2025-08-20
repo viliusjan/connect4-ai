@@ -4,22 +4,22 @@ A modern, web-based Connect 4 game featuring an intelligent AI opponent powered 
 
 ## ✨ Features
 
-- 🧠 **Intelligent AI Opponent** - Uses Minimax with Alpha-Beta Pruning for strategic gameplay
-- 📱 **Responsive Design** - Seamless experience on desktop, tablet, and mobile devices
-- ⚡ **Fast Performance** - AI makes decisions in under 1 second
-- 🎨 **Modern UI** - Clean interface with smooth animations and visual feedback
-
-- 🎯 **Strategic Depth** - AI analyzes up to 5 moves ahead for challenging gameplay
+- 🧠 **Intelligent AI Opponent** — Minimax with Alpha-Beta Pruning for strategic gameplay
+- 👥 **Multi-User Support** — Each browser gets its own game session
+- 📱 **Responsive Design** — Seamless experience on desktop, tablet, and mobile devices
+- ⚡ **Fast Performance** — AI makes decisions in under 1 second
+- 🎨 **Modern UI** — Clean interface with smooth animations and visual feedback
+- 🎯 **Strategic Depth** — AI analyzes up to 5 moves ahead for challenging gameplay
 
 ## 🧠 AI Performance Metrics
 
-| Metric | Value |
-|--------|--------|
-| **Search Depth** | 5 levels |
-| **Average Response Time** | < 1 second |
-| **Nodes Evaluated** | 10,000 - 50,000 per move |
-| **Algorithm** | Minimax with Alpha-Beta Pruning |
-| **Difficulty Level** | Challenging for most players |
+| Metric                | Value                       |
+|-----------------------|----------------------------|
+| **Search Depth**      | 5 levels                   |
+| **Average Response**  | < 1 second                 |
+| **Nodes Evaluated**   | 10,000 - 50,000 per move   |
+| **Algorithm**         | Minimax + Alpha-Beta Prune |
+| **Difficulty Level**  | Challenging                |
 
 ## 🚀 Quick Start
 
@@ -36,12 +36,26 @@ A modern, web-based Connect 4 game featuring an intelligent AI opponent powered 
    cd connect4-ai
    ```
 
-2. **Run the game locally**
+2. **Generate a Flask secret key**  
+   Run this in Python:
+   ```python
+   import secrets
+   print(secrets.token_hex(32))
+   ```
+   Copy the generated string.
+
+3. **Set your secret key in `connect4.py`**
+   ```python
+   app = Flask(__name__)
+   app.secret_key = 'paste_your_generated_secret_key_here'
+   ```
+
+4. **Run the game locally**
    ```bash
    python3 connect4.py
    ```
 
-3. **Open your browser**
+5. **Open your browser**
    ```
    Navigate to: http://localhost:8000
    ```
@@ -50,9 +64,9 @@ A modern, web-based Connect 4 game featuring an intelligent AI opponent powered 
 
 ```
 connect4-ai/
-├── connect4.py          # Main Flask application
+├── connect4.py          # Main Flask application (session-based, multi-user)
 ├── templates/           # HTML templates
-└── README.md           # Project documentation
+└── README.md            # Project documentation
 ```
 
 ## 🎯 Game Rules
@@ -84,25 +98,6 @@ Contributions are welcome! Here's how you can help:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-### Development Ideas
-
-- [ ] Difficulty level selection
-- [ ] Multiplayer support
-- [ ] Game replay functionality
-- [ ] Tournament mode
-- [ ] Enhanced animations
-- [ ] Sound effects
-
-## 📈 Performance Optimization
-
-The game is optimized for speed and user experience:
-
-- Efficient board representation
-- Optimized AI search with pruning
-- Minimal DOM manipulation
-- Responsive CSS for all devices
-- Fast server response times
-
 ## 🐛 Issues & Support
 
 Found a bug or have a suggestion? Please:
@@ -125,4 +120,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Enjoy playing Connect 4 AI! 🎉**
 
-*Challenge yourself against an intelligent opponent and improve your strategic thinking skills.*
+*Challenge yourself against an intelligent opponent and improve your strategic
