@@ -27,7 +27,6 @@ A modern, web-based Connect 4 game featuring an intelligent AI opponent powered 
 
 - Python 3.7 or higher
 - Git
-- Flask
 
 ### Installation & Setup
 
@@ -37,7 +36,12 @@ A modern, web-based Connect 4 game featuring an intelligent AI opponent powered 
    cd connect4-ai
    ```
 
-2. **Generate a Flask secret key**  
+2. **Install the project's requirements**
+   ```bash
+   pip install flask
+   ```
+   
+3. **Generate a Flask secret key**  
    Run this in Python:
    ```python
    import secrets
@@ -45,18 +49,18 @@ A modern, web-based Connect 4 game featuring an intelligent AI opponent powered 
    ```
    Copy the generated string.
 
-3. **Set your secret key in `connect4.py`**
+4. **Set your secret key in `connect4.py`**
    ```python
    app = Flask(__name__)
    app.secret_key = 'paste_your_generated_secret_key_here'
    ```
 
-4. **Run the game locally**
+5. **Run the game locally**
    ```bash
    python3 connect4.py
    ```
 
-5. **Open your browser**
+6. **Open your browser**
    ```
    Navigate to: http://localhost:8000
    ```
